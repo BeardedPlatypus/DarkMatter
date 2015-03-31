@@ -1,0 +1,1650 @@
+package com.beardedplatypus.world.geometry.acceleration_structures
+
+import com.beardedplatypus.math.{Cons, Ray}
+import com.beardedplatypus.shading.RayResult
+import com.beardedplatypus.world.geometry.GeometricObject
+
+class AABBTree(val root: AABBNode) {
+  def intersect(ray: Ray): Option[RayResult] = {
+    // identify type of ray.
+    val x: Int = if (ray.direction.x > Cons.kEpsilon) 1
+                 else if (ray.direction.x < -Cons.kEpsilon) -1
+                 else 0
+
+    val y: Int = if (ray.direction.y > Cons.kEpsilon) 1
+                 else if (ray.direction.y < -Cons.kEpsilon) -1
+                 else 0
+
+    val z: Int = if (ray.direction.x > Cons.kEpsilon) 1
+                 else if (ray.direction.z < -Cons.kEpsilon) -1
+                 else 0
+
+    (x, y, z) match {
+      case (1,1,1) => root.intersectPPP(ray)
+      case (1,1,-1) => root.intersectPPM(ray)
+      case (1,-1,1) => root.intersectPMP(ray)
+      case (1,-1,-1) => root.intersectPMM(ray)
+
+      case (-1,1,1) => root.intersectMPP(ray)
+      case (-1,1,-1) => root.intersectMPM(ray)
+      case (-1,-1,1) => root.intersectMMP(ray)
+      case (-1,-1,-1) => root.intersectMMM(ray)
+
+      case (1,1,0) => root.intersectPPO(ray)
+      case (1,-1,0) => root.intersectPMO(ray)
+      case (1,0,1) => root.intersectPOP(ray)
+      case (1,0,-1) => root.intersectPOM(ray)
+
+      case (0,1,1) => root.intersectOPP(ray)
+      case (0,1,-1) => root.intersectOPM(ray)
+      case (0,-1,1) => root.intersectOMP(ray)
+      case (0,-1,-1) => root.intersectOMM(ray)
+
+      case (-1,1,0) => root.intersectMPO(ray)
+      case (-1,0,1) => root.intersectMOP(ray)
+      case (-1,0,-1) => root.intersectMOM(ray)
+      case (-1,-1,0) => root.intersectMMO(ray)
+
+      case (-1,0,0) => root.intersectMOO(ray)
+      case (1,0,0) => root.intersectPOO(ray)
+      case (0,1,0) => root.intersectOPO(ray)
+      case (0,-1,0) => root.intersectOMO(ray)
+      case (0,0,1) => root.intersectOOP(ray)
+      case (0,0,-1) => root.intersectOOM(ray)
+    }
+  }
+
+  def intersectDistance(ray: Ray): Option[Double] = {
+    // identify type of ray.
+    val x: Int = if (ray.direction.x > Cons.kEpsilon) 1
+    else if (ray.direction.x < -Cons.kEpsilon) -1
+    else 0
+
+    val y: Int = if (ray.direction.y > Cons.kEpsilon) 1
+    else if (ray.direction.y < -Cons.kEpsilon) -1
+    else 0
+
+    val z: Int = if (ray.direction.x > Cons.kEpsilon) 1
+    else if (ray.direction.z < -Cons.kEpsilon) -1
+    else 0
+
+    (x, y, z) match {
+      case (1,1,1) => root.intersectDistancePPP(ray)
+      case (1,1,-1) => root.intersectDistancePPM(ray)
+      case (1,-1,1) => root.intersectDistancePMP(ray)
+      case (1,-1,-1) => root.intersectDistancePMM(ray)
+
+      case (-1,1,1) => root.intersectDistanceMPP(ray)
+      case (-1,1,-1) => root.intersectDistanceMPM(ray)
+      case (-1,-1,1) => root.intersectDistanceMMP(ray)
+      case (-1,-1,-1) => root.intersectDistanceMMM(ray)
+
+      case (1,1,0) => root.intersectDistancePPO(ray)
+      case (1,-1,0) => root.intersectDistancePMO(ray)
+      case (1,0,1) => root.intersectDistancePOP(ray)
+      case (1,0,-1) => root.intersectDistancePOM(ray)
+
+      case (0,1,1) => root.intersectDistanceOPP(ray)
+      case (0,1,-1) => root.intersectDistanceOPM(ray)
+      case (0,-1,1) => root.intersectDistanceOMP(ray)
+      case (0,-1,-1) => root.intersectDistanceOMM(ray)
+
+      case (-1,1,0) => root.intersectDistanceMPO(ray)
+      case (-1,0,1) => root.intersectDistanceMOP(ray)
+      case (-1,0,-1) => root.intersectDistanceMOM(ray)
+      case (-1,-1,0) => root.intersectDistanceMMO(ray)
+
+      case (-1,0,0) => root.intersectDistanceMOO(ray)
+      case (1,0,0) => root.intersectDistancePOO(ray)
+      case (0,1,0) => root.intersectDistanceOPO(ray)
+      case (0,-1,0) => root.intersectDistanceOMO(ray)
+      case (0,0,1) => root.intersectDistanceOOP(ray)
+      case (0,0,-1) => root.intersectDistanceOOM(ray)
+    }
+  }
+}
+
+object AABBTree {
+
+}
+
+
+
+abstract class AABBNode(val x0: Double, val x1: Double,
+                         val y0: Double, val y1: Double,
+                         val z0: Double, val z1: Double) {
+  //--------------------------------------------------------------------------
+  def intersectDistancePPP(ray: Ray): Option[Double]
+  def intersectDistancePPM(ray: Ray): Option[Double]
+  def intersectDistancePPO(ray: Ray): Option[Double]
+
+  def intersectDistancePMP(ray: Ray): Option[Double]
+  def intersectDistancePMM(ray: Ray): Option[Double]
+  def intersectDistancePMO(ray: Ray): Option[Double]
+
+  def intersectDistancePOP(ray: Ray): Option[Double]
+  def intersectDistancePOM(ray: Ray): Option[Double]
+  def intersectDistancePOO(ray: Ray): Option[Double]
+
+  def intersectDistanceMPP(ray: Ray): Option[Double]
+  def intersectDistanceMPM(ray: Ray): Option[Double]
+  def intersectDistanceMPO(ray: Ray): Option[Double]
+
+  def intersectDistanceMMP(ray: Ray): Option[Double]
+  def intersectDistanceMMM(ray: Ray): Option[Double]
+  def intersectDistanceMMO(ray: Ray): Option[Double]
+
+  def intersectDistanceMOP(ray: Ray): Option[Double]
+  def intersectDistanceMOM(ray: Ray): Option[Double]
+  def intersectDistanceMOO(ray: Ray): Option[Double]
+
+  def intersectDistanceOPP(ray: Ray): Option[Double]
+  def intersectDistanceOPM(ray: Ray): Option[Double]
+  def intersectDistanceOPO(ray: Ray): Option[Double]
+
+  def intersectDistanceOMP(ray: Ray): Option[Double]
+  def intersectDistanceOMM(ray: Ray): Option[Double]
+  def intersectDistanceOMO(ray: Ray): Option[Double]
+
+  def intersectDistanceOOP(ray: Ray): Option[Double]
+  def intersectDistanceOOM(ray: Ray): Option[Double]
+
+  //--------------------------------------------------------------------------
+  def intersectPPP(ray: Ray): Option[RayResult]
+  def intersectPPM(ray: Ray): Option[RayResult]
+  def intersectPPO(ray: Ray): Option[RayResult]
+
+  def intersectPMP(ray: Ray): Option[RayResult]
+  def intersectPMM(ray: Ray): Option[RayResult]
+  def intersectPMO(ray: Ray): Option[RayResult]
+
+  def intersectPOP(ray: Ray): Option[RayResult]
+  def intersectPOM(ray: Ray): Option[RayResult]
+  def intersectPOO(ray: Ray): Option[RayResult]
+
+  def intersectMPP(ray: Ray): Option[RayResult]
+  def intersectMPM(ray: Ray): Option[RayResult]
+  def intersectMPO(ray: Ray): Option[RayResult]
+
+  def intersectMMP(ray: Ray): Option[RayResult]
+  def intersectMMM(ray: Ray): Option[RayResult]
+  def intersectMMO(ray: Ray): Option[RayResult]
+
+  def intersectMOP(ray: Ray): Option[RayResult]
+  def intersectMOM(ray: Ray): Option[RayResult]
+  def intersectMOO(ray: Ray): Option[RayResult]
+
+  def intersectOPP(ray: Ray): Option[RayResult]
+  def intersectOPM(ray: Ray): Option[RayResult]
+  def intersectOPO(ray: Ray): Option[RayResult]
+
+  def intersectOMP(ray: Ray): Option[RayResult]
+  def intersectOMM(ray: Ray): Option[RayResult]
+  def intersectOMO(ray: Ray): Option[RayResult]
+
+  def intersectOOP(ray: Ray): Option[RayResult]
+  def intersectOOM(ray: Ray): Option[RayResult]
+}
+
+class AABBLeafNode(val obj: GeometricObject,
+                   x0: Double, x1: Double,
+                   y0: Double, y1: Double,
+                   z0: Double, z1: Double) extends AABBNode(x0, x1, y0, y1, z0, z1) {
+  def intersectDistancePPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1)
+      || (ray.origin.z > this.z1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0)
+      || (ray.origin.z > this.z1) || ray.origin.z < this.z0
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || (ray.origin.y < this.y0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePOM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1)|| (ray.origin.z < this.z0)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistancePOO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.z > this.z1)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMOM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0)|| (ray.origin.z < this.z0)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceMOO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  def intersectDistanceOOM(ray: Ray): Option[Double]  = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else obj.intersectDistance(ray)
+  }
+
+  // ------------------------------------------------------------------------------------------------------------------
+  def intersectPPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1)
+      || (ray.origin.z > this.z1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0)
+      || (ray.origin.z > this.z1) || ray.origin.z < this.z0
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || (ray.origin.y < this.y0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPOM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1)|| (ray.origin.z < this.z0)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectPOO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.z > this.z1)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMOM(ray: Ray):  Option[RayResult] = {
+    if ((ray.origin.x < this.x0)|| (ray.origin.z < this.z0)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectMOO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else obj.intersect(ray)
+  }
+
+  def intersectOOM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else obj.intersect(ray)
+  }
+}
+
+// ==========================================================================================================
+class AABBBranchNode(val leftNode: AABBNode, val rightNode: AABBNode,
+                     x0: Double, x1: Double,
+                     y0: Double, y1: Double,
+                     z0: Double, z1: Double) extends AABBNode(x0, x1, y0, y1, z0, z1) {
+  def intersectDistancePPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePPP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePPM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1)
+      || (ray.origin.z > this.z1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePPO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePMP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePMM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0)
+      || (ray.origin.z > this.z1) || ray.origin.z < this.z0
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePMO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || (ray.origin.y < this.y0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePOP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePOM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x > this.x1)|| (ray.origin.z < this.z0)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePOM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistancePOO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistancePOO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistancePOO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMPP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMPM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMPO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMMP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMMM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMMO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.z > this.z1)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMOP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMOM(ray: Ray): Option[Double] = {
+    if ((ray.origin.x < this.x0)|| (ray.origin.z < this.z0)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMOM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceMOO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceMOO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceMOO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOPP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOPP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOPM(ray: Ray): Option[Double] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOPM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+  def intersectDistanceOPO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOPO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOMP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOMP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+  def intersectDistanceOMM(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOMM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOMO(ray: Ray): Option[Double] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOMO(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOOP(ray: Ray): Option[Double] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOOP(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectDistanceOOM(ray: Ray): Option[Double]  = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else {
+      val tLeft: Option[Double] = leftNode.intersectDistanceOOM(ray)
+      val tRight: Option[Double] = rightNode.intersectDistanceOOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) Option(Math.min(tLeft.get, tRight.get))
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------------------------------
+  def intersectPPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPPP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPPM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y > this.y1)
+      || (ray.origin.z > this.z1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x0 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPPO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPMP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPMM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.y < this.y0)
+      || (ray.origin.z > this.z1) || ray.origin.z < this.z0
+      || (ray.s_xy * this.x1 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x0 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPMO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || (ray.origin.y < this.y0)
+      || (ray.s_xz * this.x1 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPOP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPOM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x > this.x1)|| (ray.origin.z < this.z0)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0
+      || (ray.s_xz * this.x1 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x0 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPOM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectPOO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectPOO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectPOO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMPP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMPM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y > this.y1)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y0 + ray.c_xy < 0)
+      || (ray.s_yx * this.y1 - this.x1 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMPO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMMP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMMM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.y < this.y0)
+      || (ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.s_xy * this.x0 - this.y1 + ray.c_xy < 0)
+      || (ray.s_yx * this.y0 - this.x1 + ray.c_yx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMMO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.x < this.x0) || (ray.origin.z > this.z1)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z0 + ray.c_xz < 0)
+      || (ray.s_zx * this.z1 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMOP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMOM(ray: Ray):  Option[RayResult] = {
+    if ((ray.origin.x < this.x0)|| (ray.origin.z < this.z0)
+      || (ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.s_xz * this.x0 - this.z1 + ray.c_xz < 0)
+      || (ray.s_zx * this.z0 - this.x1 + ray.c_zx < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMOM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectMOO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.y > this.y1) || ray.origin.y < this.y0) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectMOO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectMOO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOPP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z0 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOPP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOPP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOPM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y > this.y1) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y0 + ray.c_zy < 0)
+      || (ray.s_yz * this.y1 - this.z1 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOPM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOPM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOPO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOPO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOPO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOMP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z > this.z1)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z1 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z0 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOMP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOMP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOMM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.z < this.z0)
+      || (ray.origin.x < this.x0) || (ray.origin.x > this.x1)
+      || (ray.s_zy * this.z0 - this.y1 + ray.c_zy < 0)
+      || (ray.s_yz * this.y0 - this.z1 + ray.c_yz < 0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOMM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOMM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOMO(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.z < this.z0) || (ray.origin.z > this.z1)
+      || (ray.origin.x > this.x1) || ray.origin.x < this.x0) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOMO(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOMO(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOOP(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOOP(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOOP(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+
+  def intersectOOM(ray: Ray): Option[RayResult] = {
+    if ((ray.origin.y < this.y0) || (ray.origin.y > this.y1)
+      || (ray.origin.x > this.x1) || (ray.origin.x < this.x0)) None
+    else {
+      val tLeft: Option[RayResult] = leftNode.intersectOOM(ray)
+      val tRight: Option[RayResult] = rightNode.intersectOOM(ray)
+
+      if (tLeft.nonEmpty) {
+        if (tRight.nonEmpty) if (tLeft.get.distance < tRight.get.distance) tLeft else tRight
+        else tLeft
+      } else {
+        if (tRight.nonEmpty) tRight
+        else None
+      }
+    }
+  }
+}
