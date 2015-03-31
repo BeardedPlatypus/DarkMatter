@@ -1,21 +1,15 @@
 package com.beardedplatypus.main
 
-import java.io.File
-
 import com.beardedplatypus.camera.PerspectiveCamera
 import com.beardedplatypus.math.{Vector3d, Point3d, Transformation}
 import com.beardedplatypus.shading.{Texture, Color}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
-import com.beardedplatypus.shading.material.{NormalMaterial, LambertMaterial, Material}
+import com.beardedplatypus.shading.material.{NormalMaterial, LambertMaterial, Material, PhongMaterial}
 import com.beardedplatypus.world.geometry.acceleration_structures.{SimpleList, AABBTree}
 import com.beardedplatypus.world.geometry.objects.polygon._
-import com.beardedplatypus.world.geometry.GeometricObject
-import world.geometry.objects.primitives.{BoundingBoxCube, Cube, Cylinder, Sphere}
-
-//,FlatMeshTriangle}
-import com.beardedplatypus.world.{Scene, AmbientLight, Light, PointLight}
+import com.beardedplatypus.world.light.{PointLight, AmbientLight, Light}
+import com.beardedplatypus.world.Scene
 import com.beardedplatypus.world.geometry._
-import shading.material.PhongMaterial
 
 /**
  * Created by Month on 24/02/2015.

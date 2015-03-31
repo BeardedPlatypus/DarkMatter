@@ -1,10 +1,10 @@
-package shading.material
+package com.beardedplatypus.shading.material
 
 import com.beardedplatypus.math.{Vector3d, Ray}
 import com.beardedplatypus.shading.{Color, RayResult}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
-import com.beardedplatypus.shading.material.Material
-import com.beardedplatypus.world.{Light, Scene}
+import com.beardedplatypus.world.Scene
+import com.beardedplatypus.world.light.Light
 
 import scala.annotation.tailrec
 

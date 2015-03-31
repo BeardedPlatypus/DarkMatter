@@ -1,6 +1,6 @@
-package com.beardedplatypus.world
+package com.beardedplatypus.world.light
 
-import com.beardedplatypus.math.{Vector3d, Point3d}
+import com.beardedplatypus.math.{Point3d, Vector3d}
 import com.beardedplatypus.shading.Color
 
 trait Light {

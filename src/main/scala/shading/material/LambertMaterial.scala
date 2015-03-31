@@ -4,7 +4,7 @@ import com.beardedplatypus.math.{Vector3d, Ray}
 import com.beardedplatypus.shading.{Color, RayResult}
 import com.beardedplatypus.shading.brdf.LambertianBRDF
 import com.beardedplatypus.world.Scene
-import com.beardedplatypus.world.Light
+import com.beardedplatypus.world.light.Light
 import scala.annotation.tailrec
 
 class LambertMaterial(val ambientBRDF: LambertianBRDF,
