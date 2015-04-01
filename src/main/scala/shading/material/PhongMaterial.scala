@@ -14,21 +14,20 @@ class PhongMaterial(val ambientBRDF: LambertianBRDF,
                     shadow: Boolean) extends Material(shadow) {
   override def shade(rayResult: RayResult,
                      scene: Scene): Color = {
-    lazy val wo: Vector3d = rayResult.ray.direction.inverted.normalized
-    lazy val ambientComp: Color = ambientBRDF.rho(rayResult, wo) * scene.ambientLight.L(rayResult.worldHitPoint)
+    val wo: Vector3d = rayResult.ray.direction.inverted.normalized
+    val ambientComp: Color = ambientBRDF.rho(rayResult, wo) * scene.ambientLight.L(rayResult.worldHitPoint)
 
     @tailrec
     def diffuseComponentShadow(lights: List[Light], acc: Color): Color = lights match {
       case Nil => acc
       case l :: ls => {
-        lazy val wi: Vector3d = l.direction(rayResult.worldHitPoint).normalized
-        lazy val ndotwi: Double = rayResult.normal dot wi
-        lazy val diffComp: Color = (diffuseBRDF.f(rayResult, wi, wo) +
-                                    specularBRDF.f(rayResult, wi, wo)) * l.L(rayResult.worldHitPoint) * ndotwi
+        val wi: Vector3d = l.direction(rayResult.worldHitPoint).normalized
+        val ndotwi: Double = rayResult.normal dot wi
+        val diffComp: Color = (diffuseBRDF.f(rayResult, wi, wo) +
+                               specularBRDF.f(rayResult, wi, wo)) * l.L(rayResult.worldHitPoint) * ndotwi
 
-        lazy val shadowRay: Ray = Ray(rayResult.worldHitPoint, l.direction(rayResult.worldHitPoint), rayResult.ray.sample)
-
-        // FIXME: add stuff such that it doesn't use visibility when light does not casts shadow
+        val shadowRay: Ray = Ray(rayResult.worldHitPoint, l.direction(rayResult.worldHitPoint), rayResult.ray.sample)
+        
         if (ndotwi > 0.0 && (!this.receivesShadow || (!l.castsShadow || scene.visible(shadowRay, l.distanceTo(rayResult.worldHitPoint))))) {
           diffuseComponentShadow(ls, acc + diffComp)
         } else diffuseComponentShadow(ls, acc)
