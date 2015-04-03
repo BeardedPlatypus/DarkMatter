@@ -4,7 +4,7 @@ import com.beardedplatypus.math.{Vector3d, Ray}
 import com.beardedplatypus.shading.{Color, RayResult}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
 import com.beardedplatypus.world.Scene
-import com.beardedplatypus.world.light.Light
+import com.beardedplatypus.world.light.{AreaLight, Light}
 
 import scala.annotation.tailrec
 
@@ -15,25 +15,30 @@ class PhongMaterial(val ambientBRDF: LambertianBRDF,
   override def shade(rayResult: RayResult,
                      scene: Scene): Color = {
     val wo: Vector3d = rayResult.ray.direction.inverted.normalized
-    val ambientComp: Color = ambientBRDF.rho(rayResult, wo) * scene.ambientLight.L(rayResult.worldHitPoint)
+    val ambientComp: Color = ambientBRDF.rho(rayResult, wo) * scene.ambientLight.L(rayResult, Vector3d.zero)
 
     @tailrec
     def diffuseComponentShadow(lights: List[Light], acc: Color): Color = lights match {
       case Nil => acc
       case l :: ls => {
-        val wi: Vector3d = l.direction(rayResult.worldHitPoint).normalized
-        val ndotwi: Double = rayResult.normal dot wi
-        val diffComp: Color = (diffuseBRDF.f(rayResult, wi, wo) +
-                               specularBRDF.f(rayResult, wi, wo)) * l.L(rayResult.worldHitPoint) * ndotwi
+        val samples = l sample rayResult.worldHitPoint
+        var diffuseContribution = Color.black
 
-        val shadowRay: Ray = Ray(rayResult.worldHitPoint, l.direction(rayResult.worldHitPoint), rayResult.ray.sample)
-        
-        if (ndotwi > 0.0 && (!this.receivesShadow || (!l.castsShadow || scene.visible(shadowRay, l.distanceTo(rayResult.worldHitPoint))))) {
-          diffuseComponentShadow(ls, acc + diffComp)
-        } else diffuseComponentShadow(ls, acc)
+        for (s <- samples) {
+          val ndotwi: Double = rayResult.normal dot s.direction
+          val shadowRay: Ray = Ray(rayResult.worldHitPoint, s.direction, rayResult.ray.sample)
+
+          if (ndotwi > 0.0 && (!this.receivesShadow || !l.castsShadowLight || scene.visible(shadowRay, s.distance))) {
+            diffuseContribution += (diffuseBRDF.f(rayResult, s.direction, wo) +
+                                    specularBRDF.f(rayResult, s.direction, wo)) *
+                                   l.L(rayResult, s.direction) *
+                                   l.G(rayResult.worldHitPoint, s.p) *
+                                   ndotwi * l.pdfDiv(s.p)
+          }
+        }
+        diffuseComponentShadow(ls, acc + diffuseContribution  / samples.length.toDouble )
       }
     }
-
     ambientComp + diffuseComponentShadow(scene.lights, Color.black)
   }
 }
