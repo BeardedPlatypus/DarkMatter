@@ -15,5 +15,6 @@ class Point3d(val x: Double, val y: Double, val z: Double) {
 }
 
 object Point3d {
-  def origin = new Point3d(0.0, 0.0, 0.0)
+  val origin = new Point3d(0.0, 0.0, 0.0)
+  val NaN = new Point3d(Double.NaN, Double.NaN, Double.NaN)
 }
