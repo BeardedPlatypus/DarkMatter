@@ -2,11 +2,8 @@ package com.beardedplatypus.world.geometry.acceleration_structures
 
 import com.beardedplatypus.math.{Cons, Point3d, Ray}
 import com.beardedplatypus.shading.RayResult
-import com.beardedplatypus.world.geometry.{FiniteGeometricObject, GeometricObject}
-import world.geometry.acceleration_structures.DepthTracing
+import com.beardedplatypus.world.geometry.objects.GeometricObject
 
-import scala.annotation.tailrec
-import scala.util._
 
 class AABBTree(val root: AABBNode) extends AccelerationStructure {
   def intersectDistance(ray: Ray): Option[Double] = {

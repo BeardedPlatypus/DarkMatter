@@ -3,14 +3,14 @@ package com.beardedplatypus.world.geometry.objects.primitives
 import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult
 import com.beardedplatypus.shading.material.Material
-import com.beardedplatypus.world.geometry.FiniteGeometricObject
 import com.beardedplatypus.world.geometry.acceleration_structures.AABBNode
+import world.geometry.objects.FiniteGeometricObject
 
 class FinitePlane(val transformation: Transformation,
                   material: Material,
                   castShadow: Boolean) extends FiniteGeometricObject(mat = material,
                                                                      cShadow = castShadow) {
-  private val normalLocal = Vector3d(0.0, 1.0, 0.0)
+  protected val normalLocal = Vector3d(0.0, 1.0, 0.0)
 
   def intersect(ray: Ray): Option[RayResult] = {
     val tOption = intersectDistance(ray)

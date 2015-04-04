@@ -3,8 +3,9 @@ package com.beardedplatypus.world.geometry.objects.polygon
 import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult
 import com.beardedplatypus.shading.material.Material
-import com.beardedplatypus.world.geometry.{FiniteGeometricObject, GeometricObject}
+import com.beardedplatypus.world.geometry.FiniteGeometricObject
 import com.beardedplatypus.world.geometry.acceleration_structures.AABBNode
+import world.geometry.objects.FiniteGeometricObject
 
 object MeshTriangle {
   def apply(v1: Vertex, v2: Vertex, v3: Vertex,

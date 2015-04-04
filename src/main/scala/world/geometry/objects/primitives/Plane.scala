@@ -3,7 +3,7 @@ package com.beardedplatypus.world.geometry.objects.primitives
 import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult
 import com.beardedplatypus.shading.material.Material
-import com.beardedplatypus.world.geometry.InfiniteGeometricObject
+import world.geometry.objects.InfiniteGeometricObject
 
 class Plane(transformation: Transformation, normalLocal: Vector3d, mat: Material, cs: Boolean) extends InfiniteGeometricObject(mat, cs) {
   override def intersect(ray: Ray): Option[RayResult] = {
