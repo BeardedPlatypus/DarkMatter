@@ -2,14 +2,18 @@ package com.beardedplatypus.main
 
 import com.beardedplatypus.camera.PerspectiveCamera
 import com.beardedplatypus.math.{Vector3d, Point3d, Transformation}
+import com.beardedplatypus.sampling.SamplerStrategy
 import com.beardedplatypus.shading.{Texture, Color}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
-import com.beardedplatypus.shading.material.{NormalMaterial, LambertMaterial, Material, PhongMaterial}
+import com.beardedplatypus.shading.material._
 import com.beardedplatypus.world.geometry.acceleration_structures.{SimpleList, AABBTree}
 import com.beardedplatypus.world.geometry.objects.polygon._
-import com.beardedplatypus.world.light.{PointLight, AmbientLight, Light}
+import com.beardedplatypus.world.geometry.objects.primitives.FinitePlane
+import com.beardedplatypus.world.light.{PlaneAreaLight, PointLight, AmbientLight, Light}
 import com.beardedplatypus.world.Scene
 import com.beardedplatypus.world.geometry._
+import world.geometry.objects.FiniteGeometricObject
+import world.geometry.objects.primitives.{Cube, Sphere}
 
 /**
  * Created by Month on 24/02/2015.
@@ -260,7 +264,7 @@ object SceneBuilder {
   def sceneTexture2(width: Int, height: Int): Scene = {
     // basicSphereMatteSinglePointLightNoShadow
     // Camera
-    lazy val cameraPosition = Transformation.translation(0.0, 0.5, -1.5) transform Point3d.origin
+    val cameraPosition = Transformation.translation(0.0, 0.5, -1.5) transform Point3d.origin
 
     val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
       Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 1.0, 0.0),
@@ -294,4 +298,63 @@ object SceneBuilder {
       lights,
       Color.gray)
   }
+
+  def sceneAreaLightTest1(width: Int, height: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 0.0, -4.0) transform Point3d.origin
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 1.0, 0.0),
+      90)
+
+    val t1 = Transformation.translation(0.5, 0.0, 0.0) * Transformation.rotate("x", -90)
+    val t2 = Transformation.translation(-0.5, 0.0, 0.0) * Transformation.rotate("x", 90)
+
+    val mat = new EmissiveMaterial(1.0, Color.white)
+
+    val plane1 = new PlaneAreaLight(t1, mat, 1, SamplerStrategy.Constant, false)
+    val plane2 = new PlaneAreaLight(t2, mat, 1, SamplerStrategy.Constant, false)
+
+    val bb = new SimpleList(List(plane1, plane2))
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+
+    new Scene(perspectiveCamera, bb, ambientLight, Nil, Color.gray)
+  }
+
+  def sceneAreaLightTest2(width: Int, height: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 0.0, -4.0) transform Point3d.origin
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 1.0, 0.0),
+      90)
+
+    val t1 = Transformation.translation(0.0, 3.0, 0.0) * Transformation.scale(2, 2, 2) * Transformation.rotate("x", 180)
+    val t2 = Transformation.translation(0.0, -2.0, 0.0) * Transformation.scale(5.0, 5.0, 5.0)
+
+    val mat = new EmissiveMaterial(1.0, Color.white)
+    val matPhong: Material = new PhongMaterial(LambertianBRDF(0.05, Color.white),
+                                               LambertianBRDF(0.6, Color.white),
+                                               new GlossySpecularBRDF(0.4, Color.white, 300),
+                                               true)
+
+    val matLambert1 = new LambertMaterial(LambertianBRDF(0.08, Color.white),
+                                          LambertianBRDF(0.92, Color.white),
+                                          true)
+    val matLambert2 = new LambertMaterial(LambertianBRDF(0.08, Color.white),
+                                          LambertianBRDF(0.92, Color.white),
+                                          true)
+
+
+
+    val plane1 = new PlaneAreaLight(t1, mat, 5, SamplerStrategy.Jittered, true)
+    val sphere = new Sphere(Transformation.identity, matLambert1, true)
+    val plane = new FinitePlane(t2, matLambert2, true)
+
+
+    val bb = new SimpleList(List(plane1, plane, sphere))
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+    val lights: List[Light] = List(plane1)
+    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)
+  }
+
+
 }
