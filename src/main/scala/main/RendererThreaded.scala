@@ -18,7 +18,7 @@ object RendererThreaded {
     val (width, height) = (640, 640)
 
     // Scene reading
-    val scene = SceneBuilder.scene01(width, height)
+    val scene = SceneBuilder.sceneAreaLightTest2(width, height)
 
     // Render delegation.
     val renderSettings: RenderSettings = new RenderSettings(name = "test render",
