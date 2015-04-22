@@ -23,3 +23,17 @@ object RayResult {
     new RayResult(lh, wh, n, uv, m, r, d)
   }
 }
+
+class RayResultLocal(val localHitpoint: Point3d,
+                      val localNormal : Vector3d,
+                      val uv: Point2d,
+                      val distance: Double)
+
+object RayResultLocal {
+  def apply(localHitpoint: Point3d,
+            localNormal: Vector3d,
+            uv: Point2d,
+            distance: Double): RayResultLocal = {
+    new RayResultLocal(localHitpoint, localNormal, uv, distance)
+  }
+}
