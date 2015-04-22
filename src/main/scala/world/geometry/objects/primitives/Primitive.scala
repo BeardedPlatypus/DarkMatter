@@ -1,9 +1,9 @@
-package world.geometry.objects.primitives
+package com.beardedplatypus.world.geometry.objects.primitives
 
 import com.beardedplatypus.math.{Transformation, Point3d}
 import com.beardedplatypus.shading.material.Material
 import com.beardedplatypus.world.geometry.acceleration_structures.AABBNode
-import world.geometry.objects.FiniteGeometricObject
+import com.beardedplatypus.world.geometry.objects.FiniteGeometricObject
 
 import scala.annotation.tailrec
 

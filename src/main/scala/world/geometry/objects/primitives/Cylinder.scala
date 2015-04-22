@@ -1,9 +1,8 @@
-package world.geometry.objects.primitives
+package com.beardedplatypus.world.geometry.objects.primitives
 
 import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult
 import com.beardedplatypus.shading.material.Material
-import world.geometry.objects.FiniteGeometricObject
 
 class Cylinder(t: Transformation, mat: Material, shadow: Boolean) extends Primitive(t, mat, shadow) {
   def normalAt(p: Point3d, w0: Vector3d): Vector3d = {

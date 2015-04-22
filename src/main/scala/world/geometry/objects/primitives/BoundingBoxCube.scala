@@ -1,4 +1,4 @@
-package world.geometry.objects.primitives
+package com.beardedplatypus.world.geometry.objects.primitives
 
 import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult

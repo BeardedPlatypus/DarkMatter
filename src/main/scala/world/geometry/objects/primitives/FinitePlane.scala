@@ -4,7 +4,7 @@ import com.beardedplatypus.math._
 import com.beardedplatypus.shading.RayResult
 import com.beardedplatypus.shading.material.Material
 import com.beardedplatypus.world.geometry.acceleration_structures.AABBNode
-import world.geometry.objects.FiniteGeometricObject
+import com.beardedplatypus.world.geometry.objects.FiniteGeometricObject
 
 class FinitePlane(val transformation: Transformation,
                   material: Material,
