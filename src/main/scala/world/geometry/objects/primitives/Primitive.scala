@@ -1,6 +1,7 @@
 package com.beardedplatypus.world.geometry.objects.primitives
 
-import com.beardedplatypus.math.{Transformation, Point3d}
+import com.beardedplatypus.math.{Ray, Transformation, Point3d}
+import com.beardedplatypus.shading.{RayResultLocal, RayResult}
 import com.beardedplatypus.shading.material.Material
 import com.beardedplatypus.world.geometry.acceleration_structures.AABBNode
 import com.beardedplatypus.world.geometry.objects.FiniteGeometricObject
@@ -10,6 +11,27 @@ import scala.annotation.tailrec
 abstract class Primitive(val transformation: Transformation, tMat: Material, tShadow: Boolean) extends FiniteGeometricObject(tMat, tShadow) {
   // TODO Refactor this.
   protected val bbRadius: Double
+
+  protected def intersectLocal(rayLocal: Ray): Option[RayResultLocal]
+  protected def intersectDistanceLocal(rayLocal: Ray): Option[Double]
+
+  override def intersect(ray: Ray): Option[RayResult] = {
+    val intersectionOption = intersectLocal(transformation transformInv ray)
+
+    if (intersectionOption.isEmpty) None
+    else {
+      val intersection = intersectionOption.get
+      Option(RayResult(intersection.localHitpoint,
+                       transformation transform intersection.localHitpoint,
+                       (transformation transformInvTranspose intersection.localNormal).normalized,
+                       intersection.uv,
+                       this.material,
+                       ray,
+                       intersection.distance))
+    }
+  }
+
+  override def intersectDistance(ray: Ray): Option[Double] = intersectDistanceLocal(transformation transformInv ray)
 
   protected def getBoundingBox: AABBNode = {
     @tailrec
