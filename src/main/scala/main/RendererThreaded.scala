@@ -2,12 +2,14 @@ package com.beardedplatypus.main
 
 import com.beardedplatypus.shading.{ShadingKernel, ColorRGB, Color}
 import com.beardedplatypus.world.Scene
-import com.beardedplatypus.sampling.{Sampler, SamplerStrategy}
+import com.beardedplatypus.sampling.{Sample2d, Sample, Sampler, SamplerStrategy}
 import SamplerStrategy.SamplerStrategy
 import gui.{RenderFrame, ImagePanel}
 
 import java.io.File
 import javax.imageio.ImageIO
+
+import main.ConfigParser
 
 import scala.concurrent.{ExecutionContext, Future}
 import ExecutionContext.Implicits.global
@@ -15,17 +17,7 @@ import ExecutionContext.Implicits.global
 
 object RendererThreaded {
   def main(args: Array[String]): Unit = {
-    val (width, height) = (640, 640)
-
-    // Scene reading
-    val scene = SceneBuilder.sceneAreaLightTest2(width, height)
-
-    // Render delegation.
-    val renderSettings: RenderSettings = new RenderSettings(name = "test render",
-                                                            bucketSize = (4, 4),
-                                                            scene = scene,
-                                                            samplesRoot = 4,
-                                                            samplerStrategy = SamplerStrategy.Jittered)
+    val renderSettings: RenderSettings = ConfigParser.parse("..\\settings.ini")
     val renderer = new RenderManager(renderSettings)
     renderer.render
   }
@@ -68,14 +60,7 @@ class RenderManager(renderSettings: RenderSettings) {
     val offsetX = bucketSettings.pos._1 * bucketSettings.size._1
     val offsetY = bucketSettings.pos._2 * bucketSettings.size._2
 
-    val samples = Sampler.generateSamples(bucketSettings.size._1,
-                                          bucketSettings.size._2,
-                                          offsetX,
-                                          offsetY,
-                                          bucketSettings.samplesRoot,
-                                          bucketSettings.samplerStrategy)
-
-    val rays = for (s <- samples) yield scene.camera.generateRay(s)
+    val rays = for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield scene.camera.generateRay(s)
     val hits = (rays map scene.intersectGeometry).par
     val pixels = ShadingKernel evaluate(hits.to, scene)  // FIXME: changes hits.to
 
@@ -96,11 +81,24 @@ class RenderManager(renderSettings: RenderSettings) {
     }
     new BucketResult(bucketSettings.pos, res)
   }
+
+  def renderSamples(bucketSettings: BucketSettings,
+                    offsetX: Int, offsetY: Int): IndexedSeq[Sample] = {
+
+
+    val samples = for (u <- offsetX to offsetX + bucketSettings.size._1 - 1;
+                       v <- offsetY to offsetY + bucketSettings.size._2 - 1) yield {
+      val samplesPixel = Sampler.generateSamples(bucketSettings.samplesRoot, bucketSettings.samplerStrategy)
+      samplesPixel map ((s: Sample2d) => new Sample(u.toDouble + s.u, v.toDouble + s.v, u, v))
+    }
+    samples.flatten
+  }
 }
 
 
 class BucketResult(val pos: (Int, Int),
                    val pixelColors: Array[Array[Color]])
+
 
 class RenderSettings(val name: String,
                      val bucketSize: (Int, Int),
