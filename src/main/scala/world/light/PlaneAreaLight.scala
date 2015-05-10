@@ -1,15 +1,15 @@
 package com.beardedplatypus.world.light
 
 import com.beardedplatypus.math.{Cons, Point3d, Vector3d, Transformation}
-import com.beardedplatypus.sampling.SamplerStrategy
-import com.beardedplatypus.sampling.SamplerStrategy.SamplerStrategy
+import com.beardedplatypus.sampling.{Sample2d, Sampler}
 import com.beardedplatypus.sampling.SamplerStrategy.SamplerStrategy
 import com.beardedplatypus.shading.{Color, RayResult}
 import com.beardedplatypus.shading.material.EmissiveMaterial
 import com.beardedplatypus.world.geometry.objects.primitives.FinitePlane
 
-import scala.util.Random
 
+// TODO: rewrite arealight such that they use wild cards for extension of geometric object, and use a more
+// generic object to obtain the normal from such that logic is defined higher up in the hierarchy.
 class PlaneAreaLight(transformation: Transformation,
                      val emissiveMaterial: EmissiveMaterial,
                      val numSamplesRoot: Int,
@@ -49,33 +49,15 @@ class PlaneAreaLight(transformation: Transformation,
   private val squaredDDiv: Double = 1.0 / squaredD
 
   // FIXME: Fix the improper distribution when object is scaled.
-
-  val stepSize: Double = 1.0 / numSamplesRoot.toDouble
-  private val rand: Random = new Random()
-
   override def sample(hitPoint: Point3d): List[LightSample] = {
-    samplerStrategy match {
-      case SamplerStrategy.Constant => {
-        for (i <- 0 to numSamplesRoot - 1; j <- 0 to numSamplesRoot) yield {
-          val pSample = transformation transform (new Point3d( (i.toDouble + 0.5) * stepSize -0.5, 0.0, (j.toDouble + 0.5) * stepSize - 0.5))
-          new LightSample(pSample, direction(hitPoint, pSample), distanceTo(hitPoint, pSample))
-        }
-      }.to
-      case SamplerStrategy.Jittered => {
-        for (i <- 0 to numSamplesRoot - 1; j <- 0 to numSamplesRoot) yield {
-          val pSample = transformation transform (new Point3d((i.toDouble + rand.nextDouble()) * stepSize - 0.5,
-                                                              0.0,
-                                                              (j.toDouble + rand.nextDouble()) * stepSize - 0.5))
-          new LightSample(pSample, direction(hitPoint, pSample), distanceTo(hitPoint, pSample))
-        }
-      }.to
-      case SamplerStrategy.Random => {
-        for (i <- 0 to numSamplesRoot - 1; j <- 0 to numSamplesRoot) yield {
-          val pSample = transformation transform (new Point3d(rand.nextDouble() - 0.5, 0.0, rand.nextDouble() - 0.5))
-          new LightSample(pSample, direction(hitPoint, pSample), distanceTo(hitPoint, pSample))
-        }
-      }.to
+    val samples = Sampler.generateSamples(numSamplesRoot, samplerStrategy)
+
+    def genLightSample(s: Sample2d): LightSample = {
+      val pSample = transformation transform (new Point3d(s.u - 0.5, 0, s.v - 0.5))
+      new LightSample(pSample, direction(hitPoint, pSample), distanceTo(hitPoint, pSample))
     }
+
+    (samples map genLightSample).to
   }
 
   private def direction(hitPoint: Point3d, pSample: Point3d): Vector3d = (pSample - hitPoint).normalized
@@ -83,5 +65,4 @@ class PlaneAreaLight(transformation: Transformation,
     val p: Vector3d = hitPoint - pSample
     Math.sqrt(p dot p)
   }
-
 }
