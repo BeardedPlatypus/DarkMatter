@@ -2,7 +2,7 @@ package com.beardedplatypus.main
 
 import com.beardedplatypus.camera.PerspectiveCamera
 import com.beardedplatypus.math.{Vector3d, Point3d, Transformation}
-import com.beardedplatypus.sampling.SamplerStrategy
+import com.beardedplatypus.sampling.{Sampler, SamplerStrategy}
 import com.beardedplatypus.shading.{Texture, Color}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
 import com.beardedplatypus.shading.material._
@@ -11,7 +11,7 @@ import com.beardedplatypus.world.geometry.objects.polygon._
 import com.beardedplatypus.world.geometry.objects.primitives.{FinitePlane, Sphere, Cylinder, Cube}
 import com.beardedplatypus.world.light.{PlaneAreaLight, PointLight, AmbientLight, Light}
 import com.beardedplatypus.world.Scene
-import com.beardedplatypus.world.geometry.objects.FiniteGeometricObject
+import com.beardedplatypus.world.geometry.objects.{GeometricObject, FiniteGeometricObject}
 
 object SceneBuilder {
   // Scene map function TODO: create nicer version, possibly create a format to load scenes
@@ -24,6 +24,7 @@ object SceneBuilder {
     case "textureTest1" => textureTest1(width, height)
     case "textureTest2" => textureTest2(width, height)
     case "areaLightTest" => areaLightTest(width, height)
+    case "hemisphereTest" => hemisphereTest(width, height)
     case _ => throw new IllegalArgumentException()
   }
 
@@ -456,6 +457,48 @@ object SceneBuilder {
     val plane = new FinitePlane(t2, matLambert2, true)
 
     val bb = new SimpleList(List(plane1, plane, sphere))
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+    val lights: List[Light] = List(plane1)
+    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)
+  }
+
+  def hemisphereTest(width: Int, height: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 2.0, -3.0) transform Point3d.origin
+    val cameraRot = Transformation.rotate("x", 45.0)
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      cameraRot transform Vector3d(0.0, 0.0, 1.0), cameraRot transform Vector3d(0.0, 1.0, 0.0),
+      90)
+
+    val t1 = Transformation.translation(0.0, 3.0, 0.0) * Transformation.scale(2, 2, 2) * Transformation.rotate("x", 180)
+    val t2 = Transformation.translation(0.0, -2.0, 0.0) * Transformation.scale(5.0, 5.0, 5.0)
+
+    val mat = new EmissiveMaterial(0.5, Color.white)
+    val matPhong: Material = new PhongMaterial(LambertianBRDF(0.05, Color.white),
+      LambertianBRDF(0.6, Color.white),
+      new GlossySpecularBRDF(0.4, Color.white, 300),
+      true)
+
+    val matLambert1 = new LambertMaterial(LambertianBRDF(0.08, Color.white),
+      LambertianBRDF(0.92, Color.white),
+      true)
+    val matLambert2 = new LambertMaterial(LambertianBRDF(0.08, Color.white),
+      LambertianBRDF(0.92, Color.white),
+      true)
+
+    val plane1 = new PlaneAreaLight(t1, mat, 5, SamplerStrategy.Jittered, true)
+    val tScale = Transformation.scale(0.05, 0.05, 0.05)
+    val tRot = Transformation.rotate("x", -90.0)
+
+    val spheres: List[GeometricObject] = (for(p <- Sampler.generateSamplesHemisphere(10, SamplerStrategy.Jittered, 0)) yield {
+      val t = Transformation.translation(p.x, p.y, p.z)
+      new Sphere(tRot * t * tScale, matLambert1, true)
+    }).toList
+
+    val sphere = new Sphere(Transformation.identity, matLambert1, true)
+    val plane = new FinitePlane(Transformation.scale(3.0, 3.0, 3.0), matLambert2, true)
+
+    val bb = new SimpleList(sphere :: plane1 :: plane :: spheres)
     val ambientLight = new AmbientLight(Color.white, 0.0)
     val lights: List[Light] = List(plane1)
     new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)

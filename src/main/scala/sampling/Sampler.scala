@@ -1,5 +1,6 @@
 package com.beardedplatypus.sampling
 
+import com.beardedplatypus.math.Point3d
 import com.beardedplatypus.sampling.SamplerStrategy.SamplerStrategy
 
 import scala.util.Random
@@ -31,6 +32,24 @@ object Sampler {
         for (i <- 1 to (numSamplesRoot * numSamplesRoot)) yield new Sample2d(this.rand.nextDouble(),
                                                                              this.rand.nextDouble())
       }
+    }
+  }
+
+  def generateSamplesHemisphere(numSamplesRoot: Int,
+                                strategy: SamplerStrategy,
+                                e: Double) = {
+    for (s <- generateSamples(numSamplesRoot, strategy)) yield {
+      val cosPhi = Math.cos(2.0 * Math.PI * s.u)
+      val sinPhi = Math.sin(2.0 * Math.PI * s.u)
+
+      val cosTheta = Math.pow(1.0 - s.v, 1.0 / (e + 1.0))
+      val sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta)
+
+      val pu = sinTheta * cosPhi
+      val pv = sinTheta * sinPhi
+      val pw = cosTheta
+
+      new Point3d(pu, pv, pw)
     }
   }
 
