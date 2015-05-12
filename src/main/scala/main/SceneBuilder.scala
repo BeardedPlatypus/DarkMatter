@@ -9,7 +9,7 @@ import com.beardedplatypus.shading.material._
 import com.beardedplatypus.world.geometry.acceleration_structures.{AccelerationStructure, SimpleList, AABBTree}
 import com.beardedplatypus.world.geometry.objects.polygon._
 import com.beardedplatypus.world.geometry.objects.primitives.{FinitePlane, Sphere, Cylinder, Cube}
-import com.beardedplatypus.world.light.{PlaneAreaLight, PointLight, AmbientLight, Light}
+import com.beardedplatypus.world.light._
 import com.beardedplatypus.world.Scene
 import com.beardedplatypus.world.geometry.objects.{GeometricObject, FiniteGeometricObject}
 
@@ -25,6 +25,7 @@ object SceneBuilder {
     case "textureTest2" => textureTest2(width, height)
     case "areaLightTest" => areaLightTest(width, height)
     case "hemisphereTest" => hemisphereTest(width, height)
+    case "ambientOcclusionTest" => ambientOcclusionTest(width, height)
     case _ => throw new IllegalArgumentException()
   }
 
@@ -502,5 +503,42 @@ object SceneBuilder {
     val ambientLight = new AmbientLight(Color.white, 0.0)
     val lights: List[Light] = List(plane1)
     new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)
+  }
+
+  def ambientOcclusionTest(width: Int, height: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 2.5, -2.0) transform Point3d.origin
+    val cameraRot = Transformation.rotate("x", 35.0)
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      cameraRot transform Vector3d(0.0, 0.0, 1.0), cameraRot transform Vector3d(0.0, 1.0, 0.0),
+      100)
+
+    val matLambert2 = new LambertMaterial(LambertianBRDF(0.08, Color.white),
+      LambertianBRDF(0.92, Color.white),
+      true)
+
+    val matte: Material = new PhongMaterial(LambertianBRDF(0.05, Color.white),
+      LambertianBRDF(0.9, Color.white),
+      new GlossySpecularBRDF(0.1, Color.white, 300),
+      true)
+
+    val plane = new FinitePlane(Transformation.scale(3.0, 3.0, 3.0), matLambert2, true)
+    val s: List[FiniteGeometricObject] = ObjParser.parse("..\\obj\\bunny.obj", Transformation.scale(0.5, 0.5, 0.5), matte, true, false)
+    val bb = AABBTree.construct(s)
+    val c1 = new Mesh(bb, Transformation.rotate("y", 190.0), matte, true)
+
+    val accStruc: AccelerationStructure = new SimpleList(List(c1, plane))
+
+    //val pl1 = new Point3d(0.0, 10.0, -5.0)
+    //val l1 = new PointLight(Color.white, 1, pl1, (p1: Point3d, p2: Point3d) => 1.0, false)
+    val lights: List[Light] = Nil
+
+    val ambientLight = new AmbientOccluder(Color.white, 5.0, 0.5, accStruc, 8, SamplerStrategy.Jittered)
+
+    new Scene(perspectiveCamera,
+              accStruc,
+              ambientLight,
+              lights,
+              Color.gray)
   }
 }
