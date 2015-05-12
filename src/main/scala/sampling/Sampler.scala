@@ -18,8 +18,8 @@ object Sampler {
       case SamplerStrategy.Constant => {
         val stepSize: Double = 1.0 / numSamplesRoot
         val stepOffset: Double = 0.5 * stepSize
-        for (i <- 0 to numSamplesRoot;
-             j <- 0 to numSamplesRoot) yield new Sample2d(i * stepSize + stepOffset,
+        for (i <- 0 to numSamplesRoot -1;
+             j <- 0 to numSamplesRoot -1) yield new Sample2d(i * stepSize + stepOffset,
                                                           j * stepSize + stepOffset)
       }
       case SamplerStrategy.Jittered => {
