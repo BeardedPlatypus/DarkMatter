@@ -1,7 +1,7 @@
 package com.beardedplatypus.main
 
 import com.beardedplatypus.camera.PerspectiveCamera
-import com.beardedplatypus.math.{Vector3d, Point3d, Transformation}
+import com.beardedplatypus.math.{OrthonormalBasis, Vector3d, Point3d, Transformation}
 import com.beardedplatypus.sampling.{Sampler, SamplerStrategy}
 import com.beardedplatypus.shading.{Texture, Color}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
@@ -13,25 +13,30 @@ import com.beardedplatypus.world.light._
 import com.beardedplatypus.world.Scene
 import com.beardedplatypus.world.geometry.objects.{GeometricObject, FiniteGeometricObject}
 
+import scala.util.Random
+
 object SceneBuilder {
   // Scene map function TODO: create nicer version, possibly create a format to load scenes
-  def getScene(name: String, width: Int, height: Int): Scene = name match {
-    case "cubeTest" => cubeTest(width, height)
-    case "cylinderTest" => cylinderTest(width, height)
-    case "sphereTest" => sphereTest(width, height)
-    case "meshTest1" => meshTest1(width, height)
-    case "meshTest2" => meshTest2(width, height)
-    case "textureTest1" => textureTest1(width, height)
-    case "textureTest2" => textureTest2(width, height)
-    case "areaLightTest" => areaLightTest(width, height)
-    case "hemisphereTest" => hemisphereTest(width, height)
-    case "ambientOcclusionTest" => ambientOcclusionTest(width, height)
+  def getScene(name: String, width: Int, height: Int, maxDepthIndirect: Int): Scene = name match {
+    case "cubeTest" => cubeTest(width, height, maxDepthIndirect)
+    case "cylinderTest" => cylinderTest(width, height, maxDepthIndirect)
+    case "sphereTest" => sphereTest(width, height, maxDepthIndirect)
+    case "meshTest1" => meshTest1(width, height, maxDepthIndirect)
+    case "meshTest2" => meshTest2(width, height, maxDepthIndirect)
+    case "textureTest1" => textureTest1(width, height, maxDepthIndirect)
+    case "textureTest2" => textureTest2(width, height, maxDepthIndirect)
+    case "areaLightTest" => areaLightTest(width, height, maxDepthIndirect)
+    case "hemisphereTest" => hemisphereTest(width, height, maxDepthIndirect)
+    case "ambientOcclusionTest" => ambientOcclusionTest(width, height, maxDepthIndirect)
+    case "globalIlluminationTest1" => globalIlluminationTest1(width, height, maxDepthIndirect)
+    case "globalIlluminationTest2" => globalIlluminationTest2(width, height, maxDepthIndirect)
+    case "cornellBox" => cornellBox(width, height, maxDepthIndirect)
     case _ => throw new IllegalArgumentException()
   }
 
   // -----------------------------------------------------------------------------------------
   // Scenes
-  def cubeTest(width: Int, height: Int): Scene = {
+  def cubeTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
 
     val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height,
@@ -84,11 +89,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
-
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def cylinderTest(width: Int, height: Int): Scene = {
+  def cylinderTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
 
     val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height,
@@ -141,10 +146,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def sphereTest(width: Int, height: Int): Scene = {
+  def sphereTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
 
     val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height,
@@ -197,10 +203,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def meshTest1(width: Int, height: Int): Scene = {
+  def meshTest1(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     // basicSphereMatteSinglePointLightNoShadow
     // Camera
     lazy val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
@@ -255,10 +262,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def meshTest2(width: Int, height: Int): Scene = {
+  def meshTest2(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     // basicSphereMatteSinglePointLightNoShadow
     // Camera
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
@@ -313,10 +321,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def textureTest1(width: Int, height: Int): Scene = {
+  def textureTest1(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     // basicSphereMatteSinglePointLightNoShadow
     // Camera
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
@@ -370,10 +379,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def textureTest2(width: Int, height: Int): Scene = {
+  def textureTest2(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     // basicSphereMatteSinglePointLightNoShadow
     // Camera
     val cameraPosition = Transformation.translation(0.0, 1.2, -5.0) transform Point3d.origin
@@ -427,10 +437,11 @@ object SceneBuilder {
       accStruc,
       ambientLight,
       lights,
-      Color.gray)
+      Color.gray,
+      maxDepthIndirect)
   }
 
-  def areaLightTest(width: Int, height: Int): Scene = {
+  def areaLightTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 0.0, -4.0) transform Point3d.origin
 
     val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
@@ -460,10 +471,10 @@ object SceneBuilder {
     val bb = new SimpleList(List(plane1, plane, sphere))
     val ambientLight = new AmbientLight(Color.white, 0.0)
     val lights: List[Light] = List(plane1)
-    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)
+    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray, maxDepthIndirect)
   }
 
-  def hemisphereTest(width: Int, height: Int): Scene = {
+  def hemisphereTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 2.0, -3.0) transform Point3d.origin
     val cameraRot = Transformation.rotate("x", 45.0)
 
@@ -502,10 +513,10 @@ object SceneBuilder {
     val bb = new SimpleList(sphere :: plane1 :: plane :: spheres)
     val ambientLight = new AmbientLight(Color.white, 0.0)
     val lights: List[Light] = List(plane1)
-    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray)
+    new Scene(perspectiveCamera, bb, ambientLight, lights, Color.gray, maxDepthIndirect)
   }
 
-  def ambientOcclusionTest(width: Int, height: Int): Scene = {
+  def ambientOcclusionTest(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
     val cameraPosition = Transformation.translation(0.0, 2.5, -2.0) transform Point3d.origin
     val cameraRot = Transformation.rotate("x", 35.0)
 
@@ -539,6 +550,138 @@ object SceneBuilder {
               accStruc,
               ambientLight,
               lights,
-              Color.gray)
+              Color.gray,
+              maxDepthIndirect)
+  }
+
+  def globalIlluminationTest1(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 2.0, -3.0) transform Point3d.origin
+    val cameraRot = Transformation.rotate("x", 45.0)
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      cameraRot transform Vector3d(0.0, 0.0, 1.0), cameraRot transform Vector3d(0.0, 1.0, 0.0),
+      90)
+
+    val t1 = Transformation.translation(0.0, 3.0, 0.0) * Transformation.scale(2, 2, 2) * Transformation.rotate("x", 180)
+    val t2 = Transformation.translation(0.0, -2.0, 0.0) * Transformation.scale(5.0, 5.0, 5.0)
+
+
+    val matLambert1 = new LambertMaterial(LambertianBRDF(0.00, Color.white),
+      LambertianBRDF(1.0, Color.white),
+      true)
+    val matLambert2 = new LambertMaterial(LambertianBRDF(0.0, Color.white),
+      LambertianBRDF(1.0, Color.green),
+      true)
+
+    val tScale = Transformation.scale(0.05, 0.05, 0.05)
+    val tRot = Transformation.rotate("x", -90.0)
+
+    val spheres: List[GeometricObject] = (for(p <- Sampler.generateSamplesHemisphere(10, SamplerStrategy.Jittered, 0)) yield {
+      val t = Transformation.translation(p.x, p.y, p.z)
+      new Sphere(tRot * t * tScale, matLambert1, true)
+    }).toList
+
+    val sphere = new Sphere(Transformation.identity, matLambert1, true)
+    val plane = new FinitePlane(Transformation.scale(3.0, 3.0, 3.0), matLambert2, true)
+
+    val bb = new SimpleList(sphere :: plane :: spheres)
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+    new Scene(perspectiveCamera, bb, ambientLight, Nil, Color.gray, maxDepthIndirect)
+  }
+
+  def globalIlluminationTest2(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
+    val cameraPosition = Transformation.translation(0.0, 3.0, -3.0) transform Point3d.origin
+    val cameraRot = Transformation.rotate("x", 45.0)
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      cameraRot transform Vector3d(0.0, 0.0, 1.0), cameraRot transform Vector3d(0.0, 1.0, 0.0),
+      90)
+
+    val t1 = Transformation.translation(0.0, 3.0, 0.0) * Transformation.scale(2, 2, 2) * Transformation.rotate("x", 180)
+    val t2 = Transformation.translation(0.0, -2.0, 0.0) * Transformation.scale(5.0, 5.0, 5.0)
+
+
+    val matLambert1 = new LambertMaterial(LambertianBRDF(0.00, Color.white),
+      LambertianBRDF(1.0, Color.white),
+      true)
+    val matLambert2 = new LambertMaterial(LambertianBRDF(0.0, Color.white),
+      LambertianBRDF(1.0, Color.green),
+      true)
+    val emitLight = new EmissiveMaterial(1.0, Color.white)
+
+
+    val mats = Vector(new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.green),
+                                          true),
+                      new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.blue),
+                                          true),
+                      new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.red),
+                                          true),
+                      new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.yellow),
+                                          true),
+                      new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.orange),
+                                          true),
+                      new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                          LambertianBRDF(1.0, Color.magenta),
+                                          true))
+
+    val tScale = Transformation.scale(0.05, 0.05, 0.05)
+    val tRot = Transformation.rotate("x", -90.0)
+
+    val rand = new Random()
+
+    val spheres: List[GeometricObject] = (for(p <- Sampler.generateSamplesHemisphere(10, SamplerStrategy.Jittered, 0)) yield {
+      val t = Transformation.translation(p.x, p.y, p.z)
+      new Sphere(tRot * t * tScale, mats(rand.nextInt(6)), true)
+    }).toList
+
+    val sphere = new Sphere(Transformation.identity, matLambert1, true)
+
+    val lightSphere = new Sphere(Transformation.translation(0.0,  2, 0.0) * Transformation.scale(0.2, 0.2, 0.2), emitLight, true)
+
+    val plane = new FinitePlane(Transformation.scale(3.0, 3.0, 3.0), matLambert2, true)
+
+    val bb = new SimpleList(sphere :: plane :: lightSphere :: spheres)
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+    new Scene(perspectiveCamera, bb, ambientLight, Nil, Color(0.4, 0.4, 0.4), maxDepthIndirect)
+  }
+
+  def cornellBox(width: Int, height: Int, maxDepthIndirect: Int): Scene = {
+    val cameraPosition = Transformation.translation(0, 2.73, -5.2) transform Point3d.origin
+
+    val perspectiveCamera: PerspectiveCamera = PerspectiveCamera(width, height, cameraPosition,
+      Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 1.0, 0.0), 90)
+
+    val whiteMat = new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                       LambertianBRDF(1.0, Color.white),
+                                       true)
+
+    val greenMat = new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                       LambertianBRDF(1.0, Color.green),
+                                       true)
+
+    val redMat = new LambertMaterial(LambertianBRDF(0.0, Color.white),
+                                     LambertianBRDF(1.0, Color.red),
+                                     true)
+
+    val lightMat = new EmissiveMaterial(50.0, Color.white)
+
+    val floor = new FinitePlane(Transformation.scale(5.56, 1.0, 5.56), whiteMat, true)
+    val ceiling = new FinitePlane(Transformation.translation(0.0, 5.488, 0.0) * Transformation.scale(5.56, 1.0, 5.56), whiteMat, true)
+    val backWall = new FinitePlane(Transformation.translation(0.0, 2.744, 2.78) * Transformation.rotate("x", 90.0) * Transformation.scale(5.56, 1.0, 5.488), whiteMat, true)
+    val redWall = new FinitePlane(Transformation.translation(2.78, 2.744, 0.0) * Transformation.rotate("z", 90.0) * Transformation.scale(5.488, 1.0, 5.56), redMat, true)
+    val greenWall = new FinitePlane(Transformation.translation(-2.78, 2.744, 0.0) * Transformation.rotate("z", -90.0) * Transformation.scale(5.488, 1.0, 5.56), greenMat, true)
+    val light = new FinitePlane(Transformation.translation(0.0, 5.48799, 0.0) * Transformation.rotate("x", 180) * Transformation.scale(1.3, 1.0, 1.05), lightMat, true)
+
+    val shortBox = new Cube(Transformation.translation(1.0, 0.0, -1.0) * Transformation.rotate("y", 15.0) * Transformation.scale(1.65, 1.65, 1.65), whiteMat, true)
+    val tallBox = new Cube(Transformation.translation(-1.0, 0.0, 1.0) * Transformation.rotate("y", -15.0) * Transformation.scale(1.65, 3.3, 1.65), whiteMat, true)
+
+    val bb = new SimpleList(List(floor, ceiling, backWall, redWall, greenWall, light, shortBox, tallBox))
+    val ambientLight = new AmbientLight(Color.white, 0.0)
+    new Scene(perspectiveCamera, bb, ambientLight, Nil, Color(0.0, 0.0, 0.0), maxDepthIndirect)
   }
 }

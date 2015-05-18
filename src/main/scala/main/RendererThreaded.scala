@@ -1,6 +1,7 @@
 package com.beardedplatypus.main
 
-import com.beardedplatypus.shading.{ShadingKernel, ColorRGB, Color}
+import com.beardedplatypus.math.Ray
+import com.beardedplatypus.shading.{ShadingResult, ColorRGB, Color}
 import com.beardedplatypus.world.Scene
 import com.beardedplatypus.sampling.{Sample2d, Sample, Sampler, SamplerStrategy}
 import SamplerStrategy.SamplerStrategy
@@ -46,9 +47,12 @@ class RenderManager(renderSettings: RenderSettings) {
       Future {
         renderBucket(new BucketSettings(pos = (u, v),
           size = renderSettings.bucketSize,
+          kernel = renderSettings.kernel,
           scene = renderSettings.scene,
-          samplesRoot = renderSettings.samplesRoot,
-          samplerStrategy = renderSettings.samplerStrategy))
+          samplesRootAA = renderSettings.samplesRootAA,
+          samplerStrategyAA = renderSettings.samplerStrategyAA,
+          branchingFactor = renderSettings.branchingFactor,
+          samplerStrategyGI = renderSettings.samplerStrategyGI))
       }.mapTo[BucketResult] onSuccess {
         case result => updateFrame(result)
       }
@@ -60,19 +64,20 @@ class RenderManager(renderSettings: RenderSettings) {
     val offsetX = bucketSettings.pos._1 * bucketSettings.size._1
     val offsetY = bucketSettings.pos._2 * bucketSettings.size._2
 
-    val rays = for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield scene.camera.generateRay(s)
-    val hits = (rays map scene.intersectGeometry).par
-    val pixels = ShadingKernel evaluate(hits.to, scene)  // FIXME: changes hits.to
+    val rays = for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield {
+      scene.camera.generatePrimaryRay(s, bucketSettings.branchingFactor, bucketSettings.samplerStrategyGI)
+    }
+    val pixels = bucketSettings.kernel(rays, scene)
 
     val res: Array[Array[Color]] = Array.ofDim(bucketSettings.size._1, bucketSettings.size._2)
     var pixelsConsume = pixels
 
-    if (bucketSettings.samplesPerPixel > 1) {
+    if (bucketSettings.samplesPerPixelAA > 1) {
       val pixelList = pixels.toList
-      val div: Double = 1.0 / bucketSettings.samplesPerPixel
+      val div: Double = 1.0 / bucketSettings.samplesPerPixelAA
       for (x <- 0 to bucketSettings.size._1 - 1; y <- 0 to bucketSettings.size._2 - 1) res(y)(x) = Color.black
       for (p <- pixelList) res(p.sample.v - offsetY)(p.sample.u - offsetX) += p.color
-      for (x <- 0 to bucketSettings.size._1 - 1; y <- 0 to bucketSettings.size._2 - 1) res(y)(x) = res(y)(x) * div
+      for (x <- 0 to bucketSettings.size._1 - 1; y <- 0 to bucketSettings.size._2 - 1) res(y)(x) *= div
     } else {
       for (x <- 0 to bucketSettings.size._1 - 1; y <- 0 to bucketSettings.size._2 - 1) {
         res(y)(x) = pixelsConsume.head.color
@@ -88,7 +93,7 @@ class RenderManager(renderSettings: RenderSettings) {
 
     val samples = for (u <- offsetX to offsetX + bucketSettings.size._1 - 1;
                        v <- offsetY to offsetY + bucketSettings.size._2 - 1) yield {
-      val samplesPixel = Sampler.generateSamples(bucketSettings.samplesRoot, bucketSettings.samplerStrategy)
+      val samplesPixel = Sampler.generateSamples(bucketSettings.samplesRootAA, bucketSettings.samplerStrategyAA)
       samplesPixel map ((s: Sample2d) => new Sample(u.toDouble + s.u, v.toDouble + s.v, u, v))
     }
     samples.flatten
@@ -102,9 +107,12 @@ class BucketResult(val pos: (Int, Int),
 
 class RenderSettings(val name: String,
                      val bucketSize: (Int, Int),
+                     val kernel: (IndexedSeq[Ray],Scene) => IndexedSeq[ShadingResult],
                      val scene: Scene,
-                     val samplesRoot: Int,
-                     val samplerStrategy: SamplerStrategy) {
+                     val samplesRootAA: Int,
+                     val samplerStrategyAA: SamplerStrategy,
+                     val branchingFactor: Int,
+                     val samplerStrategyGI: SamplerStrategy) {
   // TODO: fix this dynamically in render collector
   val width = scene.camera.xRes
   val height = scene.camera.yRes
@@ -115,8 +123,11 @@ class RenderSettings(val name: String,
 
 class BucketSettings(val pos: (Int, Int),
                      val size: (Int, Int),
+                     val kernel: (IndexedSeq[Ray],Scene) => IndexedSeq[ShadingResult],
                      val scene: Scene,
-                     val samplesRoot: Int,
-                     val samplerStrategy: SamplerStrategy) {
-  val samplesPerPixel = samplesRoot * samplesRoot
+                     val samplesRootAA: Int,
+                     val samplerStrategyAA: SamplerStrategy,
+                     val branchingFactor: Int,
+                     val samplerStrategyGI: SamplerStrategy) {
+  val samplesPerPixelAA = samplesRootAA * samplesRootAA
 }

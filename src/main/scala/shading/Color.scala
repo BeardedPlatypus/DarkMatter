@@ -49,5 +49,10 @@ object Color {
   val blue = Color(0.0, 0.0, 1.0)
   val gray = Color(0.5, 0.5, 0.5)
 
+  val orange = Color(1.0, 0.65, 0)
+  val gold = Color(1.0, 0.84, 0)
+  val magenta = Color(1, 0, 1)
+  val yellow = Color(1, 1, 0)
+
   def clamp(x: Double): Double = (x max 0.0) min 1.0
 }

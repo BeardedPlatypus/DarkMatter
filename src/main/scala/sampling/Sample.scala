@@ -8,4 +8,5 @@ class Sample(val x: Double, val y: Double,
 object Sample {
   def apply(u: Int, v: Int): Sample = new Sample(u.toDouble + 0.5, v.toDouble + 0.5, u, v)
   //def apply(x: Double, y: Double): Sample = new Sample(x, y)
+  val NaN: Sample = new Sample(Double.NaN, Double.NaN, -1, -1) // TODO Create nicer implementation for this
 }

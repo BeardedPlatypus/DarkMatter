@@ -2,12 +2,13 @@ package com.beardedplatypus.camera
 
 import com.beardedplatypus.math.{Vector3d, Ray, Point3d, OrthonormalBasis}
 import com.beardedplatypus.sampling.Sample
+import com.beardedplatypus.sampling.SamplerStrategy.SamplerStrategy
 
 // combined camera / viewplane
 // TODO add gamma
 // TODO replace width height by pixelsize
 abstract class Camera(val xRes: Int, val yRes: Int, val origin: Point3d) {
-  def generateRay(sample: Sample): Ray
+  def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy): Ray
 }
 
 class PerspectiveCamera(xRes: Int, yRes: Int, origin: Point3d,
@@ -15,16 +16,12 @@ class PerspectiveCamera(xRes: Int, yRes: Int, origin: Point3d,
                         val width: Double,
                         val height: Double) extends Camera(xRes, yRes, origin) {
 
-  def generateRay(sample: Sample): Ray = {
+  def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy): Ray = {
     val u: Double = this.width * ((sample.x / xRes.toDouble) - 0.5)
     val v: Double = this.height * ((sample.y / yRes.toDouble) - 0.5)
 
-    // TODO: figure out why I need to cast these values first, before adding
-    val uComp: Vector3d = this.basis.u * u
-    val vComp: Vector3d = this.basis.v * v
-
-    val dir: Vector3d = this.basis.w + uComp + vComp
-    Ray(this.origin, dir, sample)
+    val dir: Vector3d = this.basis.w + this.basis.u * u + this.basis.v * v
+    Ray(this.origin, dir, sample, 0, branchingFactor, samplerStrategy)
   }
 }
 

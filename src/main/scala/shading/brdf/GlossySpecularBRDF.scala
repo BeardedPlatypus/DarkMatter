@@ -1,6 +1,7 @@
 package com.beardedplatypus.shading.brdf
 
 import com.beardedplatypus.math.Vector3d
+import com.beardedplatypus.sampling.SamplerStrategy._
 import com.beardedplatypus.shading.{Color, RayResult}
 
 class GlossySpecularBRDF(val ks: Double, val cs: Color, exponent: Double) extends BRDF {
@@ -12,6 +13,8 @@ class GlossySpecularBRDF(val ks: Double, val cs: Color, exponent: Double) extend
     if (r_dot_wo > 0.0) cs * (ks * Math.pow(r_dot_wo, exponent)) else Color.black
   }
 
-  override def sample_f(rayResult: RayResult, wi: Vector3d, wo: Vector3d): Color = Color.black //TODO
   override def rho(rayResult: RayResult, wo: Vector3d): Color = Color.black
+
+  def sampleColor(rayResult: RayResult, wo: Vector3d): Color = Color.black //TODO
+  def sampleBouncedRays(rayResult: RayResult, wi: Vector3d): (List[(Vector3d, Double)]) = Nil
 }

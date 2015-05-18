@@ -5,6 +5,7 @@ import com.beardedplatypus.shading.{Color, RayResult}
 import com.beardedplatypus.shading.brdf.{GlossySpecularBRDF, LambertianBRDF}
 import com.beardedplatypus.world.Scene
 import com.beardedplatypus.world.light.{AreaLight, Light}
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import scala.annotation.tailrec
 
@@ -40,5 +41,9 @@ class PhongMaterial(val ambientBRDF: LambertianBRDF,
       }
     }
     ambientComp + diffuseComponentShadow(scene.lights, Color.black)
+  }
+
+  override def shadePath(rayResult: RayResult, scene: Scene): Color = {
+    throw new NotImplementedException()
   }
 }

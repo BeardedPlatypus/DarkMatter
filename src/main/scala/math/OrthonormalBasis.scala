@@ -6,7 +6,6 @@ class OrthonormalBasis(val u: Vector3d,
 }
 
 object OrthonormalBasis {
-  // Assumption, DenseVectors are already normalized
   def apply(u: Vector3d,
             v: Vector3d,
             w: Vector3d): OrthonormalBasis = new OrthonormalBasis(u, v, w)
