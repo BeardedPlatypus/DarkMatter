@@ -8,7 +8,10 @@ import com.beardedplatypus.sampling.SamplerStrategy.SamplerStrategy
 // TODO add gamma
 // TODO replace width height by pixelsize
 abstract class Camera(val xRes: Int, val yRes: Int, val origin: Point3d) {
+  def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy, russianRouletteFactor: Double): Ray
   def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy): Ray
+
+  protected def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy, russianRouletteFactor: Double, hasRussianRoulette: Boolean): Ray
 }
 
 class PerspectiveCamera(xRes: Int, yRes: Int, origin: Point3d,
@@ -16,12 +19,20 @@ class PerspectiveCamera(xRes: Int, yRes: Int, origin: Point3d,
                         val width: Double,
                         val height: Double) extends Camera(xRes, yRes, origin) {
 
-  def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy): Ray = {
+  override def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy, russianRouletteFactor: Double): Ray = {
+    generatePrimaryRay(sample, branchingFactor, samplerStrategy, russianRouletteFactor, true)
+  }
+
+  override def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy): Ray = {
+    generatePrimaryRay(sample, branchingFactor, samplerStrategy, 1.0, false)
+  }
+
+  override protected def generatePrimaryRay(sample: Sample, branchingFactor: Int, samplerStrategy: SamplerStrategy, russianRouletteFactor: Double, hasRussianRoulette: Boolean): Ray = {
     val u: Double = this.width * ((sample.x / xRes.toDouble) - 0.5)
     val v: Double = this.height * ((sample.y / yRes.toDouble) - 0.5)
 
     val dir: Vector3d = this.basis.w + this.basis.u * u + this.basis.v * v
-    Ray(this.origin, dir, sample, 0, branchingFactor, samplerStrategy)
+    Ray(this.origin, dir, sample, 0, branchingFactor, samplerStrategy, russianRouletteFactor, hasRussianRoulette)
   }
 }
 

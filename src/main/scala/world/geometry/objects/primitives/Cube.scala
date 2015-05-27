@@ -5,10 +5,8 @@ import com.beardedplatypus.shading.{RayResultLocal, RayResult}
 import com.beardedplatypus.shading.material.Material
 
 class Cube(t: Transformation, mat: Material, shadow: Boolean) extends Primitive(t, mat, shadow) {
-  def intersectLocal(rayLocal: Ray): Option[RayResultLocal] = {
-
+  override def intersectLocal(rayLocal: Ray): Option[RayResultLocal] = {
     var t: (Double, Double) = ((-0.5 - rayLocal.origin.x) * rayLocal.invDirection.x, (0.5 - rayLocal.origin.x) * rayLocal.invDirection.x)
-    var tOption: Option[Double] = None
     if (t._1 > t._2) t = t.swap
     var normalLocal: Vector3d = Vector3d(1.0, 0.0, 0.0)
 
@@ -32,7 +30,9 @@ class Cube(t: Transformation, mat: Material, shadow: Boolean) extends Primitive(
     t = (Math.max(t._1, tz._1), Math.min(tz._2, t._2))
 
     val pLocal: Point3d = rayLocal.origin + (rayLocal.direction * t._1)
-    Option(RayResultLocal(pLocal, normalLocal, Point2d.invalid, t._1))
+    Option(RayResultLocal(pLocal,
+                          if ((normalLocal dot rayLocal.invDirection) >= 0.0) normalLocal else normalLocal.inverted,
+                          Point2d.invalid, t._1))
   }
 
   def intersectDistanceLocal(rayLocal: Ray): Option[Double] = {

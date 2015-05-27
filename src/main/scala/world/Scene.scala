@@ -12,6 +12,7 @@ class Scene(val camera: Camera,
             val ambientLight: Light,
             val lights: List[Light],
             val backgroundColor: Color,
+            val maxDepthDirect: Int,
             val maxDepthIndirect: Int) {
 
   def intersectGeometry(ray: Ray): IntersectResult = new IntersectResult(ray.sample, geometricObjects.intersect(ray))

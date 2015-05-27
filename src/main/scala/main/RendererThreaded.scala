@@ -7,9 +7,6 @@ import com.beardedplatypus.sampling.{Sample2d, Sample, Sampler, SamplerStrategy}
 import SamplerStrategy.SamplerStrategy
 import gui.{RenderFrame, ImagePanel}
 
-import java.io.File
-import javax.imageio.ImageIO
-
 import main.ConfigParser
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,7 +49,9 @@ class RenderManager(renderSettings: RenderSettings) {
           samplesRootAA = renderSettings.samplesRootAA,
           samplerStrategyAA = renderSettings.samplerStrategyAA,
           branchingFactor = renderSettings.branchingFactor,
-          samplerStrategyGI = renderSettings.samplerStrategyGI))
+          samplerStrategyGI = renderSettings.samplerStrategyGI,
+          hasRussianRoulette = renderSettings.hasRussianRoulette,
+          russianRouletteFactor = renderSettings.russianRouletteFactor))
       }.mapTo[BucketResult] onSuccess {
         case result => updateFrame(result)
       }
@@ -64,8 +63,14 @@ class RenderManager(renderSettings: RenderSettings) {
     val offsetX = bucketSettings.pos._1 * bucketSettings.size._1
     val offsetY = bucketSettings.pos._2 * bucketSettings.size._2
 
-    val rays = for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield {
-      scene.camera.generatePrimaryRay(s, bucketSettings.branchingFactor, bucketSettings.samplerStrategyGI)
+    val rays = if (bucketSettings.hasRussianRoulette) {
+      for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield {
+        scene.camera.generatePrimaryRay(s, bucketSettings.branchingFactor, bucketSettings.samplerStrategyGI, bucketSettings.russianRouletteFactor)
+      }
+    } else {
+      for (s <- renderSamples(bucketSettings, offsetX, offsetY)) yield {
+        scene.camera.generatePrimaryRay(s, bucketSettings.branchingFactor, bucketSettings.samplerStrategyGI)
+      }
     }
     val pixels = bucketSettings.kernel(rays, scene)
 
@@ -112,7 +117,9 @@ class RenderSettings(val name: String,
                      val samplesRootAA: Int,
                      val samplerStrategyAA: SamplerStrategy,
                      val branchingFactor: Int,
-                     val samplerStrategyGI: SamplerStrategy) {
+                     val samplerStrategyGI: SamplerStrategy,
+                     val hasRussianRoulette: Boolean,
+                     val russianRouletteFactor: Double) {
   // TODO: fix this dynamically in render collector
   val width = scene.camera.xRes
   val height = scene.camera.yRes
@@ -128,6 +135,8 @@ class BucketSettings(val pos: (Int, Int),
                      val samplesRootAA: Int,
                      val samplerStrategyAA: SamplerStrategy,
                      val branchingFactor: Int,
-                     val samplerStrategyGI: SamplerStrategy) {
+                     val samplerStrategyGI: SamplerStrategy,
+                     val hasRussianRoulette: Boolean,
+                     val russianRouletteFactor: Double) {
   val samplesPerPixelAA = samplesRootAA * samplesRootAA
 }

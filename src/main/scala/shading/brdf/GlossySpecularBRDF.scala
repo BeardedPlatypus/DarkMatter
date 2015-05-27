@@ -16,5 +16,5 @@ class GlossySpecularBRDF(val ks: Double, val cs: Color, exponent: Double) extend
   override def rho(rayResult: RayResult, wo: Vector3d): Color = Color.black
 
   def sampleColor(rayResult: RayResult, wo: Vector3d): Color = Color.black //TODO
-  def sampleBouncedRays(rayResult: RayResult, wi: Vector3d): (List[(Vector3d, Double)]) = Nil
+  def sampleBouncedRays(rayResult: RayResult, wi: Vector3d): (List[(Vector3d, Color, Double)]) = Nil
 }

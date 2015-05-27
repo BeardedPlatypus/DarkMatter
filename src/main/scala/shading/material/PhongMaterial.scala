@@ -46,4 +46,8 @@ class PhongMaterial(val ambientBRDF: LambertianBRDF,
   override def shadePath(rayResult: RayResult, scene: Scene): Color = {
     throw new NotImplementedException()
   }
+
+  override def shadePathWithDirect(rayResult: RayResult, scene: Scene): Color = {
+    throw new NotImplementedException()
+  }
 }

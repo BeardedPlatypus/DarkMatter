@@ -10,6 +10,7 @@ class NormalMaterial extends Material(false) {
                                                                         0.5 - rayResult.normal.z * 0.5)
 
   override def shadePath(rayResult: RayResult, scene: Scene): Color = shade(rayResult, scene)
+  override def shadePathWithDirect(rayResult: RayResult, scene: Scene): Color = shade(rayResult, scene)
 }
 
 class AbsNormalMaterial extends Material(false) {
@@ -18,4 +19,5 @@ class AbsNormalMaterial extends Material(false) {
     Math.abs(rayResult.normal.z))
 
   override def shadePath(rayResult: RayResult, scene: Scene): Color = shade(rayResult, scene)
+  override def shadePathWithDirect(rayResult: RayResult, scene: Scene): Color = shade(rayResult, scene)
 }

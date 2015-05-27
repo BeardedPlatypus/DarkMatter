@@ -21,8 +21,8 @@ abstract class Primitive(val transformation: Transformation, tMat: Material, tSh
     if (intersectionOption.isEmpty) None
     else {
       val intersection = intersectionOption.get
-      Option(RayResult(intersection.localHitpoint,
-                       transformation transform intersection.localHitpoint,
+      Option(RayResult(intersection.localHitPoint,
+                       transformation transform intersection.localHitPoint,
                        (transformation transformInvTranspose intersection.localNormal).normalized,
                        intersection.uv,
                        this.material,

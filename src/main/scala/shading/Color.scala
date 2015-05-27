@@ -42,7 +42,7 @@ object Color {
   def apply(r: Double, g: Double, b: Double, a: Double): Color = new Color(r, g, b, a)
   def apply(r: Double, g: Double, b: Double): Color = Color(r, g, b, 1.0)
 
-  val black = Color(0, 0, 0, 1.0)
+  val black = Color(0.0, 0.0, 0.0, 1.0)
   val white = Color(1.0, 1.0, 1.0, 1.0)
   val red = Color(1.0, 0.0, 0.0)
   val green = Color(0.0, 1.0, 0.0)

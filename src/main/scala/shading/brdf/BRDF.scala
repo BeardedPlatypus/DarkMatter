@@ -9,5 +9,5 @@ abstract class BRDF {
   def rho(rayResult: RayResult, wo: Vector3d): Color
 
   def sampleColor(rayResult: RayResult, wo: Vector3d): Color
-  def sampleBouncedRays(rayResult: RayResult, wi: Vector3d): (List[(Vector3d, Double)])
+  def sampleBouncedRays(rayResult: RayResult, wi: Vector3d): (List[(Vector3d, Color, Double)])
 }

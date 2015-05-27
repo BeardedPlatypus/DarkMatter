@@ -14,6 +14,7 @@ import scala.util.parsing.combinator.RegexParsers
 // TODO create a better way to implement this.
 private class ConfigParser extends RegexParsers {
   def positiveInteger: Parser[Int] = """(0|[1-9]\d*)""".r ^^ { _.toInt }
+  def positiveDouble: Parser[Double] = """(\d+(\.\d*)?)""".r ^^ {_.toDouble}
   def word: Parser[String] = """([a-zA-Z0-9]+)""".r ^^ (_.toString)
   def samplerStrategyType: Parser[SamplerStrategy] = word ^^ {case strat => strat match {
     case "random" => SamplerStrategy.Random
@@ -34,13 +35,18 @@ private class ConfigParser extends RegexParsers {
   def pSamplerStrategyAA: Parser[Unit] = "sampler_strategy_aa=" ~ samplerStrategyType ^^ {case id~w => samplerStrategyAA = w}
 
   def pBranchingFactorRoot: Parser[Unit] = "branching_factor=" ~ positiveInteger ^^ {case id~s => this.branchingFactorRoot = s}
-  def pMaxDepth: Parser[Unit] = "max_indirect_depth=" ~ positiveInteger ^^ {case id~d => this.maxDepthIndirect = d}
+  def pMaxDepthIndirect: Parser[Unit] = "max_indirect_depth=" ~ positiveInteger ^^ {case id~d => this.maxDepthIndirect = d}
+  def pMaxDepthDirect: Parser[Unit] = "max_direct_depth=" ~ positiveInteger ^^ {case id~d => this.maxDepthDirect = d}
   def pSamplerStrategyGI: Parser[Unit] = "sampler_strategy_gi=" ~ samplerStrategyType ^^ {case id~w => samplerStrategyGI = w}
 
   def pKernel: Parser[Unit] = "kernel=" ~ word ^^ {case id~k => kernel = RenderKernel.getKernel(k)}
-  def pScene: Parser[Unit] = "scene=" ~ word ^^ {case id~s => scene = SceneBuilder.getScene(s, this.width, this.height, maxDepthIndirect)}
+  def pScene: Parser[Unit] = "scene=" ~ word ^^ {case id~s => scene = SceneBuilder.getScene(s, this.width, this.height, maxDepthDirect, maxDepthIndirect)}
+  def pRussianRoulette: Parser[Unit] = "russian_roulette=" ~ positiveDouble ^^ {case id~d => russianRoulette = d}
 
-  def line: Parser[Unit] = pName | pWidth | pHeight | pBucketSize | pSamplesRootAA | pSamplerStrategyAA | pBranchingFactorRoot | pMaxDepth | pSamplerStrategyGI | pKernel | pScene
+  def line: Parser[Unit] = pName | pWidth | pHeight |
+                           pBucketSize | pSamplesRootAA | pSamplerStrategyAA |
+                           pBranchingFactorRoot | pMaxDepthIndirect | pMaxDepthDirect |
+                           pSamplerStrategyGI | pKernel | pRussianRoulette |pScene
   // -------------------------------------------------------------------------
   var name: String = ""
   var width: Int = -1
@@ -51,8 +57,10 @@ private class ConfigParser extends RegexParsers {
   var renderTechnique: (IndexedSeq[Ray],Scene) => IndexedSeq[ShadingResult] = null
   var branchingFactorRoot: Int = -1
   var maxDepthIndirect: Int = -1
+  var maxDepthDirect: Int = -1
   var samplerStrategyGI: SamplerStrategy = null
   var kernel: (IndexedSeq[Ray],Scene) => IndexedSeq[ShadingResult] = null
+  var russianRoulette: Double = -1.0
   var scene: Scene = null
 }
 
@@ -67,6 +75,8 @@ object ConfigParser {
                        parser.samplesRootAA,
                        parser.samplerStrategyAA,
                        parser.branchingFactorRoot,
-                       parser.samplerStrategyGI)
+                       parser.samplerStrategyGI,
+                       parser.russianRoulette > 0.0,
+                       parser.russianRoulette)
   }
 }
